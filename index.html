@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>NeoLib ✦ Digital Library</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#ede4da;
+      --panel:#f9f5f0;
+      --card:#fff;
+      --accent:#ff9f9f;
+      --accent2:#9b87f5;
+      --text:#2b2b2b;
+      --muted:#777;
+      --shadow: rgba(0,0,0,.12);
+      --shadow-strong: rgba(0,0,0,.18);
+      --transition:.3s ease;
+    }
+
+    .dark{
+      --bg:#0f1216;
+      --panel:#111418;
+      --card:#111418;
+      --accent:#ff7f7f;
+      --accent2:#6e5df2;
+      --text:#e6e6e6;
+      --muted:#9aa0a6;
+      --shadow: rgba(0,0,0,.6);
+      --shadow-strong: rgba(0,0,0,.7);
+    }
+
+    @media (prefers-color-scheme: dark){
+      :root:not(.user-set){
+        --bg:#0f1216;
+        --panel:#111418;
+        --card:#111418;
+        --accent:#ff7f7f;
+        --accent2:#6e5df2;
+        --text:#e6e6e6;
+        --muted:#9aa0a6;
+      }
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Poppins,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      transition:background var(--transition),color var(--transition);
+    }
+
+    .app{
+      display:grid;
+      grid-template-columns:90px 1fr;
+      min-height:100vh;
+      gap:20px;
+      padding:20px;
+    }
+
+    .sidebar{
+      background:var(--panel);
+      border-radius:28px;
+      padding:20px 14px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:22px;
+      box-shadow:0 20px 50px var(--shadow);
+    }
+
+    .dot{
+      width:42px;height:42px;border-radius:50%;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+    }
+
+    .nav span{
+      width:40px;height:40px;border-radius:14px;
+      background:var(--card);
+      display:grid;place-items:center;
+      box-shadow:0 10px 25px var(--shadow);
+      cursor:pointer;
+    }
+
+    .main{
+      background:var(--panel);
+      border-radius:32px;
+      padding:28px 32px;
+      box-shadow:0 30px 80px var(--shadow);
+    }
+
+    header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+    }
+
+    header h1{
+      font-family:Orbitron;
+      margin:0;
+    }
+
+    #theme-toggle{
+      background:none;
+      border:0;
+      font-size:1.2rem;
+      cursor:pointer;
+      color:var(--text);
+    }
+
+    .filters{
+      display:flex;
+      gap:14px;
+      margin:26px 0;
+    }
+
+    .filter{
+      padding:10px 18px;
+      border-radius:18px;
+      background:var(--card);
+      font-size:.8rem;
+      cursor:pointer;
+      box-shadow:0 10px 25px var(--shadow);
+    }
+
+    .filter.active,
+    .filter:hover{
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      color:white;
+    }
+
+    .books{
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+      gap:26px;
+    }
+
+    .book{
+      background:var(--card);
+      border-radius:22px;
+      padding:14px;
+      box-shadow:0 20px 40px var(--shadow);
+      transition:.4s;
+      cursor:pointer;
+      outline: none;
+    }
+
+    .book:hover{
+      transform:translateY(-10px) scale(1.05);
+      box-shadow:0 30px 60px var(--shadow-strong);
+    }
+
+    .book img{
+      width:100%;
+      height:210px;
+      object-fit:cover;
+      border-radius:16px;
+      display:block;
+    }
+
+    .book h4{margin:10px 0 2px;font-size:.95rem}
+    .book span{font-size:.75rem;color:var(--muted)}
+
+    /* Modal styles */
+    .modal-overlay{
+      position:fixed;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:rgba(0,0,0,0.45);
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .18s ease;
+      z-index:60;
+    }
+    .modal-overlay.open{
+      opacity:1;
+      pointer-events:auto;
+    }
+    .modal{
+      background:var(--panel);
+      border-radius:16px;
+      padding:18px;
+      width:min(720px,94%);
+      max-height:90vh;
+      overflow:auto;
+      box-shadow:0 40px 80px var(--shadow);
+      transform:translateY(20px);
+      transition:transform .2s ease;
+      position:relative;
+    }
+    .modal-overlay.open .modal{ transform:translateY(0); }
+
+    .modal img{ width:100%; height:360px; object-fit:cover; border-radius:12px; display:block; margin-bottom:12px; }
+    .modal h3{ margin:0 0 6px; }
+    .modal .meta{ color:var(--muted); margin-bottom:12px; font-size:.9rem; }
+    .modal p{ line-height:1.5; color:var(--text); }
+
+    .modal-close{
+      position:absolute;
+      top:12px;
+      right:12px;
+      background:var(--card);
+      border-radius:10px;
+      border:0;
+      cursor:pointer;
+      padding:6px 10px;
+      box-shadow:0 8px 20px var(--shadow);
+      font-size:1.05rem;
+    }
+
+    @media(max-width:900px){
+      .app{grid-template-columns:1fr}
+      .sidebar{display:none}
+    }
+  </style>
+</head>
+
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="dot"></div>
+    <div class="nav">
+      <span>🏠</span>
+      <span>📚</span>
+      <span>⭐</span>
+    </div>
+  </aside>
+
+  <section class="main">
+    <header>
+      <h1>NeoLib</h1>
+      <button id="theme-toggle">🌙</button>
+    </header>
+
+    <div class="filters">
+      <div class="filter active" onclick="showCategory('all',this)">All</div>
+      <div class="filter" onclick="showCategory('fiction',this)">Fiction</div>
+      <div class="filter" onclick="showCategory('romance',this)">Romance</div>
+      <div class="filter" onclick="showCategory('fantasy',this)">Fantasy</div>
+      <div class="filter" onclick="showCategory('crime',this)">Crime</div>
+    </div>
+
+    <div class="books" id="books"></div>
+  </section>
+</div>
+
+<!-- Modal for book details -->
+<div class="modal-overlay" id="modal" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <button class="modal-close" id="modal-close" aria-label="Close">✕</button>
+    <img id="modal-cover" src="" alt="">
+    <h3 id="modal-title"></h3>
+    <div class="meta" id="modal-author"></div>
+    <p id="modal-desc"></p>
+  </div>
+</div>
+
+<script>
+  const booksEl = document.getElementById('books')
+  const filters = document.querySelectorAll('.filter')
+  const themeToggle = document.getElementById('theme-toggle')
+  const rootEl = document.documentElement
+
+  const data = {
+    fiction:[
+      {t:'1984',a:'George Orwell',c:'https://covers.openlibrary.org/b/id/7222246-L.jpg'},
+      {t:'Colors De Soldats',a:'Liliane Funcken',c:'https://covers.openlibrary.org/b/id/10523438-L.jpg'},
+      {t:'The Alchemist',a:'Paulo Coelho',c:'https://covers.openlibrary.org/b/id/8231996-L.jpg'},
+      {t:'The Subtle Art Of Not Giving A F*ck',a:'Mark Manson',c:'https://covers.openlibrary.org/b/id/8231990-L.jpg'}
+    ],
+    romance:[
+      {t:'Sua',a:'Sujagar',c:'https://covers.openlibrary.org/b/id/12621540-L.jpg'},
+      {t:'Ugly Love',a:'Colleen Hoover',c:'https://covers.openlibrary.org/b/id/8232581-L.jpg'},
+      {t:'Me Before You',a:'Jojo Moyes',c:'https://covers.openlibrary.org/b/id/8165261-L.jpg'},
+      {t:'Pride and Prejudice',a:'Jane Austen',c:'https://covers.openlibrary.org/b/id/8091016-L.jpg'}
+    ],
+    fantasy:[
+      {t:'A Natural History',a:'Alice',c:'https://covers.openlibrary.org/b/id/7884866-L.jpg'},
+      {t:'The Hobbit',a:'J.R.R. Tolkien',c:'https://covers.openlibrary.org/b/id/6979861-L.jpg'},
+      {t:'Harry Potter',a:'Rick Riordan',c:'https://covers.openlibrary.org/b/id/7984916-L.jpg'},
+      {t:'Six of Crows',a:'Leigh Bardugo',c:'https://covers.openlibrary.org/b/id/8231995-L.jpg'}
+    ],
+    crime:[
+      {t:'1984',a:'George Orwell',c:'https://covers.openlibrary.org/b/id/7222246-L.jpg'},
+      {t:'The End Of White Polotics',a:'Zerlina Maxwell',c:'https://covers.openlibrary.org/b/id/10389322-L.jpg'},
+      {t:'Sherlock Holmes',a:'Arthur Conan Doyle',c:'https://covers.openlibrary.org/b/id/8235064-L.jpg'},
+      {t:'The Da Vinci Code',a:'Dan Brown',c:'https://covers.openlibrary.org/b/id/240726-L.jpg'}
+    ]
+  }
+
+  // Modal elements
+  const modalEl = document.getElementById('modal')
+  const modalCover = document.getElementById('modal-cover')
+  const modalTitle = document.getElementById('modal-title')
+  const modalAuthor = document.getElementById('modal-author')
+  const modalDesc = document.getElementById('modal-desc')
+  const modalClose = document.getElementById('modal-close')
+
+  function render(list){
+    booksEl.innerHTML=''
+    list.forEach(b=>{
+      const d=document.createElement('div')
+      d.className='book'
+      // make element keyboard accessible
+      d.tabIndex = 0
+      d.innerHTML=`<img src="${b.c}" alt="${b.t} cover"><h4>${b.t}</h4><span>${b.a}</span>`
+      // open modal on click
+      d.addEventListener('click', ()=> openModal(b))
+      // open modal on Enter key
+      d.addEventListener('keydown', (e)=> { if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openModal(b) } })
+      booksEl.appendChild(d)
+    })
+  }
+
+  function showCategory(cat,el){
+    filters.forEach(f=>f.classList.remove('active'))
+    el.classList.add('active')
+    cat==='all'
+      ? render([].concat(...Object.values(data)))
+      : render(data[cat])
+  }
+
+  function setTheme(theme){
+    rootEl.classList.add('user-set')
+    if(theme==='dark'){
+      rootEl.classList.add('dark')
+      themeToggle.textContent='☀️'
+    }else{
+      rootEl.classList.remove('dark')
+      themeToggle.textContent='🌙'
+    }
+    localStorage.setItem('neolib-theme',theme)
+  }
+
+  function initTheme(){
+    const saved=localStorage.getItem('neolib-theme')
+    if(saved) setTheme(saved)
+  }
+
+  themeToggle.onclick=()=>{
+    setTheme(rootEl.classList.contains('dark')?'light':'dark')
+  }
+
+  // Modal functions
+  function openModal(book){
+    modalCover.src = book.c
+    modalCover.alt = `${book.t} cover`
+    modalTitle.textContent = book.t
+    modalAuthor.textContent = `by ${book.a}`
+    // If there's no explicit description, use a small fallback
+    modalDesc.textContent = book.desc || `A compelling read by ${book.a}.`
+    modalEl.classList.add('open')
+    modalEl.setAttribute('aria-hidden','false')
+    // prevent background scroll
+    document.documentElement.style.overflow = 'hidden'
+    // focus the close button for accessibility
+    modalClose.focus()
+  }
+
+  function closeModal(){
+    modalEl.classList.remove('open')
+    modalEl.setAttribute('aria-hidden','true')
+    document.documentElement.style.overflow = ''
+  }
+
+  modalClose.addEventListener('click', closeModal)
+  // close when clicking on overlay (but not when clicking modal content)
+  modalEl.addEventListener('click', (e) => {
+    if(e.target === modalEl) closeModal()
+  })
+  // close on Escape
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape') closeModal()
+  })
+
+  // initial render
+  render([].concat(...Object.values(data)))
+  initTheme()
+</script>
+</body>
+</html>
